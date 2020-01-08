@@ -1,21 +1,48 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from "react-native";
 import { Input, Icon, Button } from "react-native-elements";
+import { validateEmail } from "../../utils/Validation";
+import { withNavigation } from 'react-navigation';
+import * as firebase from 'firebase';
+import Loading from '../Loading';
 
-export default function LoginForm() {
+ function LoginForm(props) {
+    const { toastRef, navigation } = props;
 
-    const [hideContraseña, setHideContraseña] = useState(true)
-    const login = () => {
-        return (
-            console.log("usuario logueado")
-        )
-    
-    }
+    const [hidePassword, setHidePassword] = useState(true);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [ isVisibleLoading, setIsVisibleLoading] = useState(false);
+
+
+    const login = async () => {
+
+        setIsVisibleLoading(true);
+        
+       if (!email || !password) {
+           toastRef.current.show("Todos los campos son obligatorios");
+       } else {
+           if (!validateEmail(email)) {
+               toastRef.current.show("El email no es correcto");
+           } else {
+               await firebase
+                .auth()
+                .signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    navigation.navigate("MyAccount");
+                })
+                .catch(() => {
+                    toastRef.current.show("Email o contraseña incorrecta");
+                })
+           }
+       }  
+    setIsVisibleLoading(false);
+    };
     return (
         <View style={StyleSheet.formContainer}>
             <Input placeholder="Correo electronico" 
                 containerStyle={styles.inputForm}
-                onChange={() => console.log("Email actualizado")}
+                onChange={e => setEmail(e.nativeEvent.text)}
                 rightIcon={
                     <Icon
                     type="material-community"
@@ -28,14 +55,14 @@ export default function LoginForm() {
             <Input placeholder="Contraseña" 
               containerStyle={styles.inputForm}
               password={true}
-              secureTextEntry={hideContraseña}
-              onChange={() => console.log("contrase")}
+              secureTextEntry={hidePassword}
+              onChange={e => setPassword(e.nativeEvent.text)}
               rightIcon={
                   <Icon
                       type="material-community"
-                      name={hideContraseña ? "eye-outline" : "eye-off-outline"}
+                      name={hidePassword ? "eye-outline" : "eye-off-outline"}
                       iconStyle={styles.iconRight}
-                      onPress={() => setHideContraseña(!hideContraseña)}
+                      onPress={() => setHidePassword(!hidePassword)}
                   />
               }  
             />
@@ -44,9 +71,12 @@ export default function LoginForm() {
                 buttonStyle={styles.btnLogin}
                 onPress={login}
             />
+            <Loading isVisible={isVisibleLoading} text="Iniciando sesion"/>
         </View>
     );
 }
+
+export default withNavigation(LoginForm);
 
 const styles = StyleSheet.create({
     formContainer: {
