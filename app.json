@@ -27,5 +27,8 @@
       "supportsTablet": true
     },
     "description": ""
-  }
+  },
+    "android": {
+      "permissions": ["CAMERA_ROLL"]
+    }
 }
